@@ -1,7 +1,7 @@
 include emu8086.inc
 org     100h
     
-    mov ah, 0    ; Chon hàm 0 cua INT 10h (dat che do hien thi)
+    mov ah, 0    ; Chon hï¿½m 0 cua INT 10h (dat che do hien thi)
     mov al, 3    ; Che do 3: Van ban 80x25, 16 mau
     int 10h      ; Goi ngat 10 cua BIOS de thuc thi
     
@@ -21,10 +21,11 @@ org     100h
     mov dx, offset msg1  ; Dua dia chi cua chuoi msg1 vao DX
     mov ah, 9            ; Chon ham 9 cua INT 21h (hien thi chuoi)
     int 21h              ; Goi ngat 21h de in ra msg1 ra man hinh
-
+      
+    
     call border ; ve tuong bao quanh
 
-    ; astept sa inceapa jocul cand primesc orice tasta in buffer
+    ; Cho den khi nguoi choi nhan mot phim bat ky de bat dau tro choi
     mov ah, 00h   ; chon ham 00h cua ngat 16h
     int 16h       ; ham nay cho den khi mot phim duoc nhan
     
@@ -39,9 +40,11 @@ org     100h
 game_loop:
     
     mov al, 0  ; Chon trang 0
-    mov ah, 05h
+    mov ah, 05h   ; ham 05h cua ngat 10h dung de chon trang hien thi
     int 10h    ; Goi ngat 10h de chon trang hien thi
-    
+     
+    ;call draw_random_food    
+     
     ; Hien thi dau ran
     mov dx, [snake]  ; Lay toa do cua dau ran
     
@@ -127,7 +130,42 @@ ret     ; Tro ve chuong trinh goi no
 ; ------ functions ------
 ; ------ functions ------
 
-
+draw_random_food proc    
+         
+    xor ax, ax        ; Xï¿½a AX
+    int 1ah           ; lay so tick he thong vao cx:dx
+    mov ax, dx        ; su dung dx lam gia tri ngau nhien
+    
+    ; sinh gia tri ngau nhien cho dl (cot) tu 1 den 79
+    mov ah, 0         ; Xoa AH de trï¿½nh loi chia
+    mov al, dl        ; lay phan thap cua dx
+    mov bl, 78        ; gioi han cua gia tri toi da la 78
+    div bl            ; AX / 78, du (AH) lï¿½ giï¿½ tr? ng?u nhiï¿½n   
+    mov dl, ah        ; Luu k?t qu? vï¿½o DL (t?a d? c?t)
+    inc dl            ; ï¿½?m b?o giï¿½ tr? t? 1 d?n 78
+    
+    ; Sinh giï¿½ tr? ng?u nhiï¿½n cho DH (hï¿½ng), t? 1 d?n 23
+    mov ah, 0         ; Xï¿½a AH d? trï¿½nh l?i chia
+    mov al, dh        ; L?y ph?n cao c?a DX
+    mov bl, 23        ; Gi?i h?n giï¿½ tr? t?i da lï¿½ 23
+    div bl            ; AX / 23, du (AH) lï¿½ giï¿½ tr? ng?u nhiï¿½n     
+    mov dh, ah        ; Luu k?t qu? vï¿½o DH (t?a d? hï¿½ng)
+    inc dh            ; ï¿½?m b?o giï¿½ tr? t? 1 d?n 23
+    
+    ; ï¿½ua con tr? d?n v? trï¿½ (DL, DH)
+    mov bh, 0         ; Ch?n trang mï¿½n hï¿½nh 0
+    mov ah, 02h       ; ï¿½?t con tr? t?i (DL, DH)
+    int 10h
+    
+    ; In kï¿½ t? '@' t?i v? trï¿½ ng?u nhiï¿½n
+    mov ah, 09h       ; L?nh in kï¿½ t?
+    mov al, '@'       ; Kï¿½ t? c?n in
+    mov bl, 0eh       ; Mï¿½u sï¿½ng
+    mov cx, 1         ; In 1 kï¿½ t?
+    int 10h
+        
+    ret
+draw_random_food endp
 
 border proc ; Ham ve khung bao quanh tro choi      
     ; Thiet lap che do van ban 
@@ -225,8 +263,8 @@ move_snake proc
     jmp stop_move       ; Neu nhan phim khac cac phim dieu huong, tro choi dung lai
                         ; con tro xuat hien cho den khi nhan lai phim dieu huong hoac ESC
     
-    move_left:    ; Di chuyen cap ran sang trai
-      mov   ax, [snake]  ; Lay toa do hien tai cua cap ran
+    move_left:    ; Di chuyen dau ran sang trai
+      mov   ax, [snake]  ; Lay toa do hien tai cua dau ran
       dec   al           ; Giam gia tri cot de di chuyen sang trai
       mov   [snake], ax  ; Cap nhat vi tri moi
       call check_next_character ; Kiem tra xem co an duoc moi hoac va cham tuong khong
@@ -260,7 +298,7 @@ move_snake endp
 ;-----------------------------------------
  
 check_next_character proc 
-    mov ax, [snake]      ; Lay toa do cua cap ran (cot - al, hang - ah)
+    mov ax, [snake]      ; Lay toa do cua dau ran (cot - al, hang - ah)
     mov dh, ah           ; Luu hang vao dh de dat con tro
     mov dl, al           ; Luu cot vao dl de dat con tro
     mov bh, 0            ; Su dung trang man hinh 0
@@ -282,7 +320,7 @@ check_next_character proc
     cmp al, '@'          ; Kiem tra xem ky tu co phai la thuc an?
     jne move_ok          ; Neu khong phai, tiep tuc di chuyen binh thuong       
     inc word ptr [score] ; Neu la thuc an, tang diem len 1 don vi 
-    
+             ; word dam bao 'score' duoc xu ly nhu mot bien 16 bit
 
 move_ok:
     ret
@@ -302,7 +340,11 @@ check_next_character endp
     snake dw s_size dup(0) ; Cap phat bo nho cho 7 phan tu, moi phan tu la mot tu (word - 2 byte) 
                            ; Moi doan cua ran se co 2 byte luu tru vi tri hang va cot (toa do)
     tail dw ?      ; Bien luu tru vi tri cua duoi ran
-    score dw 0     ; Bien luu diem so cua nguoi choi, khoi tao = 0
+    score dw 0     ; Bien luu diem so cua nguoi choi, khoi tao = 0     
+    
+    row_random db 0 ; bien luu hang ngau nhien
+    col_random db 0 ; bien luu cot ngau nhien  
+    
     ; Ma phim cho cac phim mui ten (dung de dieu khien ran)
     left    equ     4bh    ; Mui ten trai
     right   equ     4dh    ; Mui ten phai
@@ -340,7 +382,8 @@ check_next_character endp
          
      msgover db "Game Over! Your score is: $" 
      
-     msg0 db "                                                         ", 0dh,0ah    
+     
+msg0 db "                                                         ", 0dh,0ah    
         db "  ================== @GAME CONTROLS ====================   ", 0dh,0ah
         db "                                                           ", 0dh,0ah
         db "  Use the arrow keys to control the snake's direction.     ", 0dh,0ah
@@ -364,10 +407,9 @@ check_next_character endp
         db "  Press @ANY KEY to begin your Snake adventure...          ", 0dh,0ah
         db "  After the border are drawed, press any key to start      ", 0dh,0ah
         db "  =====================================================    $"
-
      
      DEFINE_PRINT_NUM 
      DEFINE_PRINT_NUM_UNS   
      DEFINE_CLEAR_SCREEN
      
-     end  
+     end  main
