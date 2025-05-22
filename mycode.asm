@@ -2,38 +2,57 @@
 .stack 200h
 .data           
 
-msgMainScreen db "                                                         ", 0dh,0ah    
-        db "  ================ SNAKE GAME PROJECT ==================    ", 0dh,0ah
-        db "  ========== COMPUTER ARCHITECTURE PROJECT =============   ", 0dh,0ah
-        db "                                                           ", 0dh,0ah
-        db "                        TEAM 09                            ", 0dh,0ah
-        db "                                                           ", 0dh,0ah
-        db "  =================== HOW TO PLAY ====================    ", 0dh,0ah
-        db "  Use arrow keys to control the snake:                     ", 0dh,0ah
-        db "     [^] - Move Up                                        ", 0dh,0ah
-        db "     [v] - Move Down                                      ", 0dh,0ah
-        db "     [<] - Move Left                                      ", 0dh,0ah
-        db "     [>] - Move Right                                     ", 0dh,0ah
-        db "     [ESC] - Exit Game                                    ", 0dh,0ah
-        db "                                                           ", 0dh,0ah
-        db "  =================== GAME RULES =====================    ", 0dh,0ah
-        db "  * Collect food (@) to grow longer and score points      ", 0dh,0ah
-        db "  * Each food item gives you 1 point                      ", 0dh,0ah
-        db "  * Don't hit the walls or yourself!                      ", 0dh,0ah
-        db "  * Try to get the highest score possible                 ", 0dh,0ah
-        db "                                                           ", 0dh,0ah
-        db "  ==================== START GAME ====================    ", 0dh,0ah
-        db "                                                           ", 0dh,0ah
-        db "  Press any key to start your Snake adventure...          ", 0dh,0ah
-        db "                                                           ", 0dh,0ah
-        db "  ===================================================    $"
+msgMainScreen db "============================= SNAKE GAME PROJECT ==============================", 0dh,0ah
+              db "======================= COMPUTER ARCHITECTURE PROJECT =========================", 0dh,0ah
+              db "                                                           ", 0dh,0ah
+              db "                                  TEAM 09                            ", 0dh,0ah
+              db "                                                           ", 0dh,0ah
+              db "================================ HOW TO PLAY ==================================", 0dh,0ah
+              db "  Use arrow keys to control the snake:                     ", 0dh,0ah
+              db "     [^] - Move Up                                        ", 0dh,0ah
+              db "     [v] - Move Down                                      ", 0dh,0ah
+              db "     [<] - Move Left                                      ", 0dh,0ah
+              db "     [>] - Move Right                                     ", 0dh,0ah
+              db "     [ESC] - Exit Game                                    ", 0dh,0ah
+              db "                                                           ", 0dh,0ah
+              db "================================ GAME RULES ====================================", 0dh,0ah
+              db "  * Collect food (@) to grow longer and score points      ", 0dh,0ah
+              db "  * Each food item gives you 1 point                      ", 0dh,0ah
+              db "  * Don't hit the walls or yourself!                      ", 0dh,0ah
+              db "  * Try to get the highest score possible                 ", 0dh,0ah
+              db "                                                           ", 0dh,0ah
+              db "================================= START GAME ===================================", 0dh,0ah
+              db "  Press any key to start your Snake adventure...          ", 0dh,0ah
+              db "                                                           ", 0dh,0ah
+              db " ==============================================================================$"
 
+msgLevelSelect  db "                                                                            ", 0dh, 0ah
+                db "                                                                            ", 0dh, 0ah
+                db "                                                                            ", 0dh, 0ah
+                db "=========================== SELECT DIFFICULTY LEVEL ============================", 0dh, 0ah
+                db "                               [1] EASY MODE                                ", 0dh, 0ah
+                db "                       Only border walls, no barriers                       ", 0dh, 0ah
+                db "                                                                            ", 0dh, 0ah
+                db "                                                                            ", 0dh, 0ah
+                db "                                                                            ", 0dh, 0ah
+                db "                               [2] MEDIUM MODE                              ", 0dh, 0ah
+                db "                       Border walls + Simple barriers                       ", 0dh, 0ah
+                db "                                                                            ", 0dh, 0ah
+                db "                                                                            ", 0dh, 0ah
+                db "                                                                            ", 0dh, 0ah
+                db "                               [3] HARD MODE                                ", 0dh, 0ah
+                db "                       Border walls + Cross barriers                        ", 0dh, 0ah
+                db "                                                                            ", 0dh, 0ah
+                db "                                                                            ", 0dh, 0ah
+                db "                                                                            ", 0dh, 0ah
+                db "                    Press 1, 2 or 3 to select your level...                 ", 0dh, 0ah
+                db "================================================================================$"
     
     msgover db "Game Over! Your score is: $" 
     msgPlayAgain db "Do you want to play again?$"
     msgYN db "Press Y (Yes) or N (No)!$"
      
-    s_max_size equ 20
+    s_max_size equ 2000
     s_size  dw  3    ; Dinh nghia kich thuoc mac dinh cua ran (7 doan)
     snake dw s_max_size dup(0) ; Cap phat bo nho cho 7 phan tu, moi phan tu la mot tu (word - 2 byte) 
                            ; Moi doan cua ran se co 2 byte luu tru vi tri hang va cot (toa do)
@@ -76,13 +95,50 @@ main proc
     int 16h     ; Goi ngat 16h de doi mot phim duoc nhan            
                  
     call clear_screen 
-             
+
+  ; Hiển thị menu chọn level
+    mov dx, offset msgLevelSelect
+    mov ah, 9
+    int 21h
+    
+  select_level:
+    mov ah, 00h     ; Đợi phím
+    int 16h
+  
+    
+    cmp al, '1'     ; Level 1 - Easy
+    je level_1
+    cmp al, '2'     ; Level 2 - Medium
+    je level_2
+    cmp al, '3'     ; Level 3 - Hard
+    je level_3
+    jmp select_level ; Nếu không phải 1,2,3 thì đợi tiếp
+    
+  level_1:
+    call clear_screen
+    call border
+    jmp start_game
+    
+  level_2:
+    call clear_screen
+    call border
+    call barrier_lv2
+    jmp start_game
+    
+  level_3:
+    call clear_screen
+    call border
+    call barrier_lv3
+    jmp start_game
+
     ; Hien thi thong bao ve thuc an tren man hinh
     ;mov dx, offset msg1  ; Dua dia chi cua chuoi msg1 vao DX
     ;mov ah, 9            ; Chon ham 9 cua INT 21h (hien thi chuoi)
     ;int 21h              ; Goi ngat 21h de in ra msg1 ra man hinh         
                
     call border          ; Ve tuong xung quanh    
+    call barrier_lv3
+  start_game:
     call hide_cursor
     call draw_random_food 
     
@@ -297,6 +353,83 @@ border proc
     ret
 border endp     
 ;----------------------------------------------------------------------------------------------
+
+barrier_lv2 proc
+    push ax
+    push bx
+    push cx
+    push dx
+    
+    mov ah, 06h        ; Scroll up function
+    mov al, 0          ; Clear mode
+    mov bh, 60h        ; Thuộc tính màu (nền đỏ)
+    
+    ; Vẽ rào dọc bên trái
+    mov ch, 1          ; Hàng bắt đầu
+    mov cl, 20         ; Cột bắt đầu
+    mov dh, 16         ; Hàng kết thúc
+    mov dl, 20         ; Cột kết thúc
+    int 10h
+    
+    ; Vẽ rào dọc bên phải
+    mov ch, 8          ; Hàng bắt đầu
+    mov cl, 59         ; Cột bắt đầu
+    mov dh, 23         ; Hàng kết thúc
+    mov dl, 59         ; Cột kết thúc
+    int 10h
+    
+    pop dx
+    pop cx
+    pop bx
+    pop ax
+    ret
+barrier_lv2 endp
+
+barrier_lv3 proc
+    push ax
+    push bx
+    push cx
+    push dx
+    
+    mov ah, 06h        ; Scroll up function
+    mov al, 0          ; Clear mode
+    mov bh, 60h        ; Thuộc tính màu (nền đỏ)
+    
+    ; Vẽ rào ngang trên màn hình từ cột 25 đến 55
+    mov ch, 5         ; Hàng bắt đầu
+    mov cl, 25         ; Cột bắt đầu
+    mov dh, 5         ; Hàng kết thúc
+    mov dl, 55         ; Cột kết thúc
+    int 10h
+    
+    ; Vẽ rào ngang dưới màn hình từ cột 20 đến 60
+    mov ch, 20         ; Hàng bắt đầu
+    mov cl, 25         ; Cột bắt đầu
+    mov dh, 20         ; Hàng kết thúc
+    mov dl, 55         ; Cột kết thúc
+    int 10h
+    
+    ; Vẽ rào dọc bên trái
+    mov ch, 5          ; Hàng bắt đầu
+    mov cl, 15         ; Cột bắt đầu
+    mov dh, 20         ; Hàng kết thúc
+    mov dl, 15         ; Cột kết thúc
+    int 10h
+    
+    ; Vẽ rào dọc bên phải
+    mov ch, 5          ; Hàng bắt đầu
+    mov cl, 65         ; Cột bắt đầu
+    mov dh, 20         ; Hàng kết thúc
+    mov dl, 65         ; Cột kết thúc
+    int 10h
+    
+    pop dx
+    pop cx
+    pop bx
+    pop ax
+    ret
+barrier_lv3 endp
+
 move_snake proc
 
     ; Tính vị trí cuối của rắn
@@ -375,6 +508,9 @@ check_next_character proc
     and ah, 0F0h        
     cmp ah, 70h         
     je collision
+
+    cmp ah, 60h
+    je collision
     
     cmp al, '*'          ; Kiem tra xem ky tu co phai la mot phan cua than ran?
     je collision         ; Neu dung, goi ham fail (ran tu va cham chinh no)
@@ -401,14 +537,14 @@ collision:
     ret
 check_next_character endp     
 
-;----------------------------------------------------------------------
+;----------------------------------------------------------------------------------------------
 draw_random_food proc
     push ax
     push bx
     push cx
     push dx
 
-  try_again:
+try_again:
     ; Tạo vị trí random như cũ
     mov ah, 00h
     int 1ah
@@ -429,42 +565,32 @@ draw_random_food proc
     inc dx
     mov row_random, dl
     
-    ; Kiểm tra vị trí có trùng với thân rắn không
-    push si
-    mov si, 0
-    mov cx, word ptr [s_size]   ; Lấy kích thước rắn hiện tại
-
-  check_collision:
-    mov al, byte ptr [snake + si]    ; Lấy cột của phần thân
-    cmp al, col_random
-    jne next_segment
+    ; Kiểm tra vị trí có trống không
+    mov dh, row_random    ; Hàng
+    mov dl, col_random    ; Cột
+    mov bh, 0            ; Trang hiện tại
+    mov ah, 02h          ; Đặt vị trí con trỏ
+    int 10h
     
-    mov al, byte ptr [snake + si + 1] ; Lấy hàng của phần thân
-    cmp al, row_random
-    je collision_found              ; Nếu trùng cả hàng và cột
+    mov ah, 08h          ; Đọc ký tự và thuộc tính
+    int 10h              ; AL = ký tự, AH = thuộc tính
     
-  next_segment:
-    add si, 2
-    loop check_collision
+    cmp al, ' '          ; Kiểm tra có phải khoảng trống
+    jne try_again        ; Nếu không phải space thì thử vị trí khác
     
-    pop si
-    jmp print_food                 ; Không có va chạm, in thức ăn
+    and ah, 0F0h         ; Lấy màu nền
+    cmp ah, 00h          ; Kiểm tra màu nền đen (trống)
+    jne try_again        ; Nếu không phải nền đen thì thử vị trí khác
     
-  collision_found:
-    pop si
-    jmp try_again                 ; Có va chạm, thử vị trí mới
-
-print_food:
-    ; In thức ăn tại vị trí đã chọn
+    ; In thức ăn tại vị trí trống
     mov dh, row_random
     mov dl, col_random
     mov ah, 02h
-    mov bh, 0
     int 10h
     
-    mov al, '@'
+    mov al, '@'          ; Ký tự thức ăn
     mov ah, 09h
-    mov bl, 0Ch
+    mov bl, 0Ch          ; Màu đỏ sáng
     mov cx, 1
     int 10h
     
